@@ -1,12 +1,11 @@
 #!/bin/bash
 
-
 fasta=~/Arabidopsis/fasta/GCF_000001735.4_TAIR10.1_genomic.fna
 fastq=~/Arabidopsis/fastq.files/DRR659586.fastq
+chr=~/Arabidopsis/variants/chr.txt
 
 #changing working directory
 cd ~/Arabidopsis
-
 
 # STEP 1: Run fastqc
 fastqc $fastq
@@ -23,35 +22,30 @@ bwa index $fasta
 bwa mem -t4 $fasta results/fastq.fastp > alignment/align.sam
 echo "bwa finished running!"
 
-
 #conversion to bam,sort,index,view statistics of the alignment
-
 samtools view -S -b alignment/align.sam > alignment/align.bam
 samtools  sort alignment/align.bam -o alignment/align.sorted.bam
 samtools index alignment/align.sorted.bam
 samtools flagstat  alignment/align.sorted.bam  > alignment/stat
-
+echo "SAM to BAM conversion, sorting, indexing, and flagstat finished."
 
 #variants calling
-
-bcftools mpileup -f reference.fa alignment/align.sorted.bam -Ou -o alignment/raw.bcf
+bcftools mpileup -f $fasta  alignment/align.sorted.bam -Ou -o alignment/raw.bcf
 bcftools call -mv -Oz -o variants/raw_variants.vcf.gz  alignment/raw.bcf
 bcftools index variants/raw_variants.vcf.gz
-bcftools view raw_variants.vcf.gz
+echo "Variant calling finished."
 
 #variant filtering
 bcftools filter -e 'QUAL<30 || DP<10' variants/raw_variants.vcf.gz -Oz -o variants/filtered_variants.vcf.gz
 
 #change chromosome names to match database
-bcftools  annotate  --rename-chrs   chr.txt  variants/filtered_variants.vcf.gz   -Oz  -o
-variants/renamed_variants.vcf.gz
+bcftools  annotate  --rename-chrs   $chr  variants/filtered_variants.vcf.gz   -Oz  -o variants/renamed_variants.vcf.gz
 echo "Chromosome renaming finished."
 
 #variants annotation
-snpEff  download  variants/Arabidopsis_thaliana
-snpEff Arabidopsis_thaliana  variants/filtered_variants.vcf.gz > variants/annotated.vcf
+snpEff  download  Arabidopsis_thaliana
+snpEff Arabidopsis_thaliana  variants/renamed_variants.vcf.gz > variants/annotated.vcf
+
 
 #get annotation summary
-bcftools  query  -f  '%CHROM\t%POS\t%REF\t%ALT\t%QUAL\t%INFO/ANN\n'  variants/annotated.vcf > variants/annotated_variants.tsv
-
-
+bcftools  query  -f  '%CHROM\t%POS\t%REF\t%ALT\t%QUAL\t%INFO/ANN\n'  variants/annotated.vcf  > variants/annotated_variants.tsv
