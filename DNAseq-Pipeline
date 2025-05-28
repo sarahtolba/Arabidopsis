@@ -39,5 +39,19 @@ bcftools call -mv -Oz -o variants/raw_variants.vcf.gz  alignment/raw.bcf
 bcftools index variants/raw_variants.vcf.gz
 bcftools view raw_variants.vcf.gz
 
+#variant filtering
+bcftools filter -e 'QUAL<30 || DP<10' variants/raw_variants.vcf.gz -Oz -o variants/filtered_variants.vcf.gz
+
+#change chromosome names to match database
+bcftools  annotate  --rename-chrs   chr.txt  variants/filtered_variants.vcf.gz   -Oz  -o
+variants/renamed_variants.vcf.gz
+echo "Chromosome renaming finished."
+
+#variants annotation
+snpEff  download  variants/Arabidopsis_thaliana
+snpEff Arabidopsis_thaliana  variants/filtered_variants.vcf.gz > variants/annotated.vcf
+
+#get annotation summary
+bcftools  query  -f  '%CHROM\t%POS\t%REF\t%ALT\t%QUAL\t%INFO/ANN\n'  variants/annotated.vcf > variants/annotated_variants.tsv
 
 
