@@ -1,72 +1,108 @@
-Arabidopsis Variant Calling Pipeline
-This pipeline performs quality control, trimming, alignment, and variant calling on Arabidopsis thaliana sequencing data.
+# Arabidopsis Variant Calling Pipeline
 
-Input Files
-Reference Genome: ~/Arabidopsis/fasta/GCF_000001735.4_TAIR10.1_genomic.fna
+This pipeline performs quality control, trimming, alignment, and variant calling on *Arabidopsis thaliana* sequencing data.
 
-Raw FASTQ Reads: ~/Arabidopsis/fastq.files/DRR659586.fastq
 
-Tools Used
-FastQC: Quality control of raw and trimmed reads
 
-Fastp: Trimming low-quality reads
+## Input Files
 
-BWA: Alignment to the reference genome
+ **Reference Genome:**  
+  `~/Arabidopsis/fasta/GCF_000001735.4_TAIR10.1_genomic.fna`
 
-Samtools: BAM file manipulation and statistics
+ **Raw FASTQ Reads:**  
+  `~/Arabidopsis/fastq.files/DRR659586.fastq`
 
-BCFtools: Variant calling and filtering
+ **Chromosome Rename Map (`chr.txt`):**
+  
+NC_003070.9 Chr1
+NC_003071.7 Chr2
+NC_003074.8 Chr3
+NC_003075.7 Chr4
+NC_003076.8 Chr5
 
-Pipeline Steps
-Set working directory
 
-Quality control
-Run FastQC on the raw FASTQ file.
+---
 
-Trimming
-Use fastp to trim low-quality bases.
+## Tools Used
 
-Post-trimming QC
-Run FastQC on the cleaned FASTQ file.
+- **FastQC:** Quality control of raw and trimmed reads  
+- **Fastp:** Trimming low-quality reads  
+- **BWA:** Alignment to the reference genome  
+- **Samtools:** BAM file manipulation and statistics  
+- **BCFtools:** Variant calling and filtering  
+- **snpEff:** Variant annotation  
 
-Reference indexing
-Index the reference genome using BWA.
+---
 
-Alignment
-Align reads to the reference using BWA-MEM.
+## Pipeline Steps
 
-SAM/BAM Conversion and Sorting
-Convert SAM to BAM, sort and index it using Samtools.
+1. **Set working directory**
 
-Alignment Statistics
-Generate alignment statistics using Samtools flagstat.
+2. **Quality control**  
+ Run FastQC on the raw FASTQ file.
 
-Variant Calling
-Use BCFtools mpileup and bcftools call to generate a compressed VCF file.
+3. **Trimming**  
+ Use fastp to trim low-quality bases.
 
-VCF Indexing and Viewing
-Index and view called variants.
+4. **Post-trimming QC**  
+ Run FastQC on the trimmed FASTQ file.
 
-Output Files
-results/fastq.fastp: Trimmed FASTQ file
+5. **Reference indexing**  
+ Index the reference genome using BWA.
 
-results/*.html: FastQC reports
+6. **Alignment**  
+ Align reads to the reference using BWA-MEM.
 
-alignment/align.sam: Raw alignment file
+7. **SAM/BAM Conversion and Sorting**  
+ Convert SAM to BAM, sort, and index with samtools.
 
-alignment/align.sorted.bam: Sorted and indexed BAM
+8. **Alignment Statistics**  
+ Generate alignment statistics using `samtools flagstat`.
 
-alignment/stat: Alignment statistics
+9. **Variant Calling**  
+ Use bcftools mpileup and call to generate a compressed VCF.
 
-variants/raw_variants.vcf.gz: Called variants in compressed VCF format
+10. **VCF Indexing and Viewing**  
+  Index and view variants.
 
-Notes
-Ensure all required tools are installed and available in your $PATH.
+11. **Variant Filtering**  
+  Filter variants by quality and depth (QUAL < 30 or DP < 10).
 
-Create the following directories before running: results/, alignment/, variants/
+12. **Chromosome Renaming**  
+  Rename chromosome names in the VCF using `chr.txt` to match annotation database.
 
-Modify paths as needed based on your system.
+13. **Variant Annotation**  
+  Annotate filtered variants with snpEff (download *Arabidopsis thaliana* database if needed).
 
-To Run the Pipeline
+14. **Get Annotation Summary**  
+  Extract summary info from annotated VCF.
+
+---
+
+## Output Files
+
+- `results/fastq.fastp` — Trimmed FASTQ file  
+- `results/*.html` — FastQC reports  
+- `alignment/align.sam` — Raw alignment file  
+- `alignment/align.sorted.bam` — Sorted and indexed BAM  
+- `alignment/stat` — Alignment statistics  
+- `variants/raw_variants.vcf.gz` — Raw called variants (compressed)  
+- `variants/filtered_variants.vcf.gz` — Filtered variants  
+- `variants/renamed_variants.vcf.gz` — Chromosome-renamed variants  
+- `variants/annotated.vcf` — Annotated variants  
+- `variants/annotated_variants.tsv` — Annotation summary table  
+
+
+## Important Notes
+
+- Make sure all required tools are installed and available in your `$PATH`.
+- Create the following directories **before** running the script:  
+`results/`, `alignment/`, `variants/`
+- Ensure `chr.txt` contains the chromosome mapping shown above.
+- Modify file paths in the script as needed depending on your system.
+- The snpEff database for *Arabidopsis thaliana* will be downloaded automatically by the script (or can be downloaded manually beforehand).
+- 
+
+## How to Run
 
 bash run_pipeline.sh
