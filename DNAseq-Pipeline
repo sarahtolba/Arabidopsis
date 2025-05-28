@@ -1,0 +1,43 @@
+#!/bin/bash
+
+
+fasta=~/Arabidopsis/fasta/GCF_000001735.4_TAIR10.1_genomic.fna
+fastq=~/Arabidopsis/fastq.files/DRR659586.fastq
+
+#changing working directory
+cd ~/Arabidopsis
+
+
+# STEP 1: Run fastqc
+fastqc $fastq
+
+#Run fastp to trim reads with poor quality
+fastp -i $fastq -o results/fastq.fastp
+echo "fastp finished running!"
+fastqc results/fastq.fastp  -o results/
+
+#index the refererence genome
+bwa index $fasta
+
+#Run bwa for alignment
+bwa mem -t4 $fasta results/fastq.fastp > alignment/align.sam
+echo "bwa finished running!"
+
+
+#conversion to bam,sort,index,view statistics of the alignment
+
+samtools view -S -b alignment/align.sam > alignment/align.bam
+samtools  sort alignment/align.bam -o alignment/align.sorted.bam
+samtools index alignment/align.sorted.bam
+samtools flagstat  alignment/align.sorted.bam  > alignment/stat
+
+
+#variants calling
+
+bcftools mpileup -f reference.fa alignment/align.sorted.bam -Ou -o alignment/raw.bcf
+bcftools call -mv -Oz -o variants/raw_variants.vcf.gz  alignment/raw.bcf
+bcftools index variants/raw_variants.vcf.gz
+bcftools view raw_variants.vcf.gz
+
+
+
