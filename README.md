@@ -14,11 +14,11 @@ This pipeline performs quality control, trimming, alignment, and variant calling
 
  **Chromosome Rename Map (`chr.txt`):**
   
-NC_003070.9 Chr1
-NC_003071.7 Chr2
-NC_003074.8 Chr3
-NC_003075.7 Chr4
-NC_003076.8 Chr5
+NC_003070.9   Chr1
+NC_003071.7   Chr2
+NC_003074.8   Chr3
+NC_003075.7   Chr4
+NC_003076.8   Chr5
 
 
 ---
