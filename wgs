@@ -1,0 +1,35 @@
+#!/bin/bash
+
+cd ~/Ecoli || exit
+
+# Define paths
+reference=~/Ecoli/reference/GCF_000005845.2_ASM584v2_genomic.fna
+fastq1=~/Ecoli/fastq/SRR33792312/SRR33792312_1.fastq
+fastq2=~/Ecoli/fastq/SRR33792312/SRR33792312_2.fastq
+results=~/Ecoli/fastq/results
+index=~/Ecoli/reference
+alignment=~/Ecoli/alignment
+
+# Create directories if they don't exist
+mkdir -p "$results" "$alignment" "$index"
+
+# Run FastQC on raw reads
+fastqc "$fastq1" "$fastq2" -o "$results"
+
+# Run MultiQC on all QC results
+multiqc "$results" -o "$results"
+
+# Run fastp for trimming
+fastp -i "$fastq1" -I "$fastq2" -o "$results/trimmed1.fastq" -O "$results/trimmed2.fastq"
+
+# Index the reference genome (BWA index will generate multiple files in the same folder as the reference)
+bwa index "$reference"
+
+# Align the reads to the reference genome using BWA-MEM
+bwa mem "$reference" "$results/trimmed1.fastq" "$results/trimmed2.fastq" > "$alignment/align.sam"
+
+# Convert SAM to BAM, sort, index, and get statistics
+samtools view -Sb "$alignment/align.sam" > "$alignment/align.bam"
+samtools sort "$alignment/align.bam" -o "$alignment/align.sorted.bam"
+samtools index "$alignment/align.sorted.bam"
+samtools flagstat "$alignment/align.sorted.bam" > "$alignment/flagstat.txt"
